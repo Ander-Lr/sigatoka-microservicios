@@ -1,0 +1,87 @@
+{
+  "version": "2.0",
+  "fecha": "2026-11-11",
+  "arquitectura": "efficientnet_b2.ra_in1k",
+  "img_size": 224,
+  "clases": [
+    "sana",
+    "sigatoka",
+    "otro"
+  ],
+  "nombres": {
+    "sana": "Hoja sana",
+    "sigatoka": "Sigatoka negra",
+    "otro": "No es una hoja de banano"
+  },
+  "normalizacion": {
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "preprocesamiento": "RGB; lado corto -> img_size (bicúbico); recorte central cuadrado; /255; (x-mean)/std; NCHW",
+  "umbral_decision": 0.5,
+  "umbral_otro": 0.5,
+  "umbral_ood_mahalanobis": 178.0151725884881,
+  "factor_umbral_ood_alto": 1.3,
+  "preparacion_previa": "si el lado mayor > 640 px: reducir a 640 (LANCZOS), igual que la caché de entrenamiento",
+  "salidas_onnx": {
+    "logits": "[N,3] (sana, sigatoka, otro) -> softmax",
+    "features": "[N,D] para Mahalanobis"
+  },
+  "metricas_prueba": {
+    "VP": 522,
+    "FN": 2,
+    "FP": 0,
+    "VN": 500,
+    "sensibilidad": 0.9961832061068703,
+    "sensibilidad_ic95": [
+      0.9861913334690844,
+      0.9989526945878178
+    ],
+    "especificidad": 1.0,
+    "especificidad_ic95": [
+      0.9923753814690964,
+      0.9999999999999999
+    ],
+    "exactitud": 0.998046875,
+    "exactitud_ic95": [
+      0.9929065784982852,
+      0.9994642303889986
+    ],
+    "precision": 1.0,
+    "precision_ic95": [
+      0.9926943779267371,
+      1.0000000000000002
+    ],
+    "auc": 1.0
+  },
+  "config_entrenamiento": {
+    "modelo": "efficientnet_b2.ra_in1k",
+    "size": 224,
+    "epocas": 15,
+    "lr": 0.0003,
+    "batch": 32,
+    "escala_sana": [
+      0.05,
+      1.0
+    ],
+    "escala_sigatoka": [
+      0.35,
+      1.0
+    ],
+    "frac_otro": 0.33,
+    "p_escena": 0.25,
+    "label_smoothing": 0.1,
+    "semilla": 42,
+    "percentil_ood": 99.0,
+    "umbral_otro": 0.5
+  },
+  "dataset": "Banana Leaves Imagery Dataset (Mduma & Elinisa, Sci Data 2025): BLACK SIGATOKA-1/2/3, HEALTHY-1/2/3"
+}
