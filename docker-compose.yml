@@ -1,0 +1,125 @@
+# Detector de Sigatoka negra · arquitectura de microservicios
+#   docker compose up -d --build              levantar todo   → http://localhost:8000
+#   docker compose up -d --scale diagnostico=3 escalar solo la inferencia
+#   Consul (descubrimiento)  → http://localhost:8500
+#   RabbitMQ (broker)        → http://localhost:15672  (usuario y clave del .env)
+name: sigatoka
+
+x-servicio: &servicio
+  restart: unless-stopped
+  environment: &entorno
+    CONSUL_URL: http://consul:8500
+    RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+    SIGATOKA_MAX_MB: ${SIGATOKA_MAX_MB:-25}
+  depends_on: &dependencias
+    consul: { condition: service_healthy }
+    rabbitmq: { condition: service_healthy }
+
+services:
+  # ------------------------------------------------------------ infraestructura
+  consul:
+    image: hashicorp/consul:1.20
+    command: agent -dev -client=0.0.0.0 -config-dir=/etc/consul.d
+    volumes: ["./infra/consul:/etc/consul.d:ro"]
+    ports: ["127.0.0.1:8500:8500"]
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports: ["127.0.0.1:15672:15672"]
+    volumes: ["rabbitmq:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      retries: 30
+
+  gateway:
+    <<: *servicio
+    build: { context: ., dockerfile: servicios/gateway/Dockerfile }
+    ports: ["${PUERTO:-8000}:8000"]
+    depends_on: { consul: { condition: service_healthy } }
+
+  # ------------------------------------------------------------ microservicios y sus bases de datos
+  usuarios:
+    <<: *servicio
+    build: { context: ., dockerfile: servicios/usuarios/Dockerfile }
+    environment:
+      <<: *entorno
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-usuarios:5432/usuarios
+    depends_on:
+      <<: *dependencias
+      postgres-usuarios: { condition: service_healthy }
+
+  postgres-usuarios:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: usuarios
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: ["postgres-usuarios:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d usuarios"]
+      interval: 5s
+      retries: 20
+
+  diagnostico:
+    <<: *servicio
+    build: { context: ., dockerfile: servicios/diagnostico/Dockerfile }
+    depends_on: { consul: { condition: service_healthy } }
+
+  historial:
+    <<: *servicio
+    build: { context: ., dockerfile: servicios/historial/Dockerfile }
+    environment:
+      <<: *entorno
+      MONGO_URL: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo-historial:27017
+      SIMULAR_FALLO_PURGA: ${SIMULAR_FALLO_PURGA:-0}
+    depends_on:
+      <<: *dependencias
+      mongo-historial: { condition: service_healthy }
+
+  mongo-historial:
+    image: mongo:7.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes: ["mongo-historial:/data/db"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      retries: 20
+
+  metricas:
+    <<: *servicio
+    build: { context: ., dockerfile: servicios/metricas/Dockerfile }
+    environment:
+      <<: *entorno
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis-metricas:6379/0
+    depends_on:
+      <<: *dependencias
+      redis-metricas: { condition: service_healthy }
+
+  redis-metricas:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes: ["redis-metricas:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--no-auth-warning", "ping"]
+      interval: 5s
+      retries: 20
+
+  web:
+    build: { context: ., dockerfile: servicios/web/Dockerfile }
+    restart: unless-stopped
+
+volumes:
+  rabbitmq:
+  postgres-usuarios:
+  mongo-historial:
+  redis-metricas:
