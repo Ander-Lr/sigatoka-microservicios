@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f6f7f5">
+  <meta name="description" content="Diagnóstico de Sigatoka negra en hojas de banano con inteligencia artificial">
+  <title>Detector de Sigatoka</title>
+  <link rel="icon" href="/static/icono.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/estilos.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <!-- ======================= ACCESO (login / registro) ======================= -->
+  <div id="vista-acceso" class="acceso" hidden>
+    <div class="acceso-tarjeta">
+      <img src="/static/icono.svg" alt="" width="56" height="56" class="acceso-logo">
+      <h1>Detector de Sigatoka</h1>
+      <p class="acceso-sub">Diagnóstico de hojas de banano con inteligencia artificial</p>
+
+      <form id="form-login" class="formulario" novalidate>
+        <h2>Iniciar sesión</h2>
+        <label for="login-usuario">Usuario</label>
+        <input id="login-usuario" name="usuario" autocomplete="username" required autocapitalize="none" spellcheck="false">
+        <label for="login-contrasena">Contraseña</label>
+        <div class="campo-clave">
+          <input id="login-contrasena" name="contrasena" type="password" autocomplete="current-password" required>
+          <button type="button" class="ver-clave" aria-label="Mostrar contraseña" data-objetivo="login-contrasena">Ver</button>
+        </div>
+        <p class="form-error" role="alert"></p>
+        <button class="btn btn-primario" type="submit">Entrar</button>
+        <p class="cambiar">¿No tiene cuenta? <a href="#registro" data-ir="registro">Crear una cuenta</a></p>
+      </form>
+
+      <form id="form-registro" class="formulario" novalidate hidden>
+        <h2>Crear cuenta</h2>
+        <label for="reg-nombre">Nombre</label>
+        <input id="reg-nombre" name="nombre" autocomplete="name" required maxlength="60">
+        <label for="reg-usuario">Usuario</label>
+        <input id="reg-usuario" name="usuario" autocomplete="username" required minlength="3" maxlength="32"
+               pattern="[A-Za-z0-9._\-]{3,32}" autocapitalize="none" spellcheck="false">
+        <small class="pista">3 a 32 caracteres: letras, números, punto, guion o guion bajo.</small>
+        <label for="reg-contrasena">Contraseña</label>
+        <div class="campo-clave">
+          <input id="reg-contrasena" name="contrasena" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+          <button type="button" class="ver-clave" aria-label="Mostrar contraseña" data-objetivo="reg-contrasena">Ver</button>
+        </div>
+        <small class="pista">Mínimo 8 caracteres.</small>
+        <label for="reg-confirmar">Repetir contraseña</label>
+        <input id="reg-confirmar" name="confirmar" type="password" autocomplete="new-password" required>
+        <p class="form-error" role="alert"></p>
+        <button class="btn btn-primario" type="submit">Crear cuenta</button>
+        <p class="cambiar">¿Ya tiene cuenta? <a href="#login" data-ir="login">Iniciar sesión</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================= APLICACIÓN ======================= -->
+  <div id="vista-app" class="app" hidden>
+    <header class="cabecera">
+      <img src="/static/icono.svg" alt="" width="28" height="28">
+      <h1>Detector de Sigatoka</h1>
+      <span id="nombre-usuario" class="usuario"></span>
+      <button id="btn-eliminar-cuenta" class="btn-texto" type="button">Eliminar cuenta</button>
+      <button id="btn-salir" class="btn-texto" type="button">Salir</button>
+    </header>
+
+    <main>
+      <nav class="pestanas" role="tablist" aria-label="Secciones">
+        <button role="tab" id="tab-foto" aria-controls="panel-foto" aria-selected="true">Foto</button>
+        <button role="tab" id="tab-camara" aria-controls="panel-camara" aria-selected="false" tabindex="-1">Cámara</button>
+        <button role="tab" id="tab-historial" aria-controls="panel-historial" aria-selected="false" tabindex="-1">Historial</button>
+      </nav>
+
+      <!-- Foto -->
+      <section id="panel-foto" role="tabpanel" aria-labelledby="tab-foto">
+        <label id="zona" class="zona" for="archivo">
+          <input id="archivo" type="file" accept="image/jpeg,image/png,image/webp" class="oculto">
+          <img id="vista-previa" alt="Foto seleccionada" hidden>
+          <span id="zona-texto" class="zona-texto">
+            <strong>Elegir o tomar una foto</strong>
+            <small>o arrastrarla aquí</small>
+          </span>
+          <div class="cargando" hidden><span class="giro" aria-hidden="true"></span><span>Analizando…</span></div>
+        </label>
+        <aside id="guia-foto" class="guia" aria-labelledby="guia-foto-titulo">
+          <p id="guia-foto-titulo" class="guia-titulo">Así debe ser la foto</p>
+          <div class="guia-cuerpo">
+            <div class="guia-ejemplos">
+              <figure><img src="/static/ejemplos/sigatoka.jpg" alt="Ejemplo correcto: hoja con Sigatoka, de cerca y centrada" width="88" height="88"><figcaption>Sigatoka</figcaption></figure>
+              <figure><img src="/static/ejemplos/sana.jpg" alt="Ejemplo correcto: hoja sana, de cerca y centrada" width="88" height="88"><figcaption>Sana</figcaption></figure>
+            </div>
+            <ul class="guia-lista">
+              <li>Una hoja <strong>de cerca y centrada</strong>, que llene casi toda la foto</li>
+              <li>Buena luz, enfocada y sin sombras fuertes</li>
+              <li>Sin dedos ni objetos encima de la hoja</li>
+            </ul>
+          </div>
+          <p class="requisitos">JPG, PNG o WEBP · hasta 25 MB · mínimo 224 × 224 px · se analiza el cuadrado central</p>
+        </aside>
+      </section>
+
+      <!-- Cámara -->
+      <section id="panel-camara" role="tabpanel" aria-labelledby="tab-camara" hidden>
+        <div id="visor" class="visor">
+          <video id="video" autoplay playsinline muted aria-label="Vista de la cámara"></video>
+          <img id="captura" alt="Foto capturada" hidden>
+          <div id="marco" class="marco" aria-hidden="true">
+            <span class="esq si"></span><span class="esq sd"></span><span class="esq ii"></span><span class="esq id"></span>
+          </div>
+          <div class="cargando" hidden><span class="giro" aria-hidden="true"></span><span>Analizando…</span></div>
+          <p id="camara-aviso" class="camara-aviso" hidden></p>
+        </div>
+        <div class="controles-camara">
+          <button id="btn-girar" class="btn btn-sec" type="button" hidden aria-label="Cambiar cámara">⟲</button>
+          <button id="btn-disparo" class="disparo" type="button" aria-label="Tomar foto"><span></span></button>
+          <button id="btn-otra" class="btn btn-sec" type="button" hidden>Tomar otra</button>
+        </div>
+        <aside id="guia-camara" class="guia" aria-labelledby="guia-camara-titulo">
+          <p id="guia-camara-titulo" class="guia-titulo">Cómo tomar la foto</p>
+          <div class="guia-cuerpo">
+            <div class="guia-ejemplos">
+              <figure class="ancha"><img src="/static/ejemplos/camara.jpg" alt="Ejemplo correcto: la hoja llena todo el marco de la cámara" width="132" height="99"><figcaption>La hoja llena el marco</figcaption></figure>
+            </div>
+            <ul class="guia-lista">
+              <li>Acerque la hoja hasta que <strong>llene el marco</strong> (20–40 cm)</li>
+              <li>Buena luz y sin contraluz</li>
+              <li>Quédese quieto al tocar el botón</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Resultado (Foto y Cámara) -->
+      <section id="resultado" class="resultado" data-clase="vacio" aria-live="polite" hidden>
+        <p id="res-titulo" class="res-titulo"></p>
+        <div class="medidor" aria-hidden="true"><span id="res-barra"></span></div>
+        <p id="res-detalle" class="res-detalle"></p>
+        <p id="res-aviso" class="res-aviso" hidden></p>
+        <div id="revision" class="revision" hidden>
+          <p class="revision-pregunta">¿Qué era realmente la imagen?</p>
+          <div class="opciones" role="group" aria-label="Clase real">
+            <button type="button" class="opcion" data-real="sana">Sana</button>
+            <button type="button" class="opcion" data-real="sigatoka">Sigatoka</button>
+            <button type="button" class="opcion" data-real="otro">No es hoja</button>
+          </div>
+          <p id="revision-estado" class="revision-estado"></p>
+        </div>
+        <details id="res-mas">
+          <summary>Detalles técnicos</summary>
+          <dl id="res-tabla"></dl>
+        </details>
+      </section>
+
+      <!-- Historial -->
+      <section id="panel-historial" role="tabpanel" aria-labelledby="tab-historial" hidden>
+        <div class="tarjeta">
+          <h2>Resumen</h2>
+          <div class="cifras">
+            <div><span id="r-total">0</span><small>Predicciones</small></div>
+            <div><span id="r-revisadas">0</span><small>Revisadas</small></div>
+            <div class="ok"><span id="r-aciertos">0</span><small>Aciertos</small></div>
+            <div class="mal"><span id="r-errores">0</span><small>Errores</small></div>
+          </div>
+          <p class="nota">Solo se cuentan las predicciones en las que indicó la clase real.
+            <span id="r-pendientes"></span></p>
+
+          <h3>Matriz de confusión (positivo = Sigatoka)</h3>
+          <table class="matriz2">
+            <thead><tr><th></th><th>IA: Sigatoka</th><th>IA: Sana</th></tr></thead>
+            <tbody>
+              <tr><th>Real: Sigatoka</th><td class="ok">VP <b id="m-vp">0</b></td><td class="mal">FN <b id="m-fn">0</b></td></tr>
+              <tr><th>Real: Sana</th><td class="mal">FP <b id="m-fp">0</b></td><td class="ok">VN <b id="m-vn">0</b></td></tr>
+            </tbody>
+          </table>
+
+          <details class="matriz-completa">
+            <summary>Tabla completa (incluye "No es hoja")</summary>
+            <table class="matriz3">
+              <thead><tr><th>Real \ IA</th><th>Sana</th><th>Sigatoka</th><th>No es hoja</th></tr></thead>
+              <tbody id="m3"></tbody>
+            </table>
+          </details>
+        </div>
+
+        <div class="tarjeta">
+          <div class="barra-historial">
+            <h2>Predicciones</h2>
+            <label class="filtro"><input type="checkbox" id="solo-pendientes"> Solo sin revisar</label>
+            <a class="btn btn-sec" href="/api/predicciones.csv" download>Descargar CSV</a>
+          </div>
+          <div class="tabla-scroll">
+            <table class="tabla-pred">
+              <thead><tr><th>Imagen</th><th>Fecha</th><th>IA</th><th>Real</th><th></th><th></th></tr></thead>
+              <tbody id="lista"></tbody>
+            </table>
+          </div>
+          <p id="lista-vacia" class="nota" hidden>Todavía no hay predicciones. Analice una foto en las pestañas Foto o Cámara.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pie">Herramienta educativa y de apoyo. No reemplaza el diagnóstico de un fitopatólogo.</footer>
+  </div>
+</body>
+</html>
