@@ -100,7 +100,8 @@ async def crear(imagen: UploadFile = File(...), origen: Literal["foto", "camara"
                                                     files=archivos)
     except (CircuitoAbierto, ServicioNoDisponible, ErrorServicio, OSError):
         raise HTTPException(503, "El servicio de diagnóstico no está disponible en este momento. "
-                                 "El historial sigue funcionando. Intente de nuevo en unos segundos.") from None
+                                 "El historial sigue funcionando. Intente de nuevo en unos segundos.",
+                            headers={"X-Fallo-Dependencia": "diagnostico"}) from None
     if resp.status_code != 200:
         raise HTTPException(resp.status_code, resp.json().get("detail", "Imagen no válida."))
     r = resp.json()

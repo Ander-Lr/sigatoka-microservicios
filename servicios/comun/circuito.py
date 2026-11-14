@@ -66,7 +66,8 @@ class ClienteServicio:
         async def hacer():
             base = await self.resolutor.url(self.nombre)
             r = await self.http.request(metodo, base + ruta, **kw)
-            if r.status_code >= 500:
+            # Un servicio sano que avisa que SU dependencia falló no cuenta como fallo propio
+            if r.status_code >= 500 and "x-fallo-dependencia" not in r.headers:
                 raise ErrorServicio(r)
             return r
         return await self.breaker.llamar(hacer)
