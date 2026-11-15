@@ -153,7 +153,7 @@ cambiarse en cualquier otro entorno.
 ├── modelo/                   modelo ONNX, detector de imágenes ajenas y metadatos
 ├── infra/consul/             registro del servicio web en Consul
 ├── scripts/prueba_humo.sh    prueba de punta a punta
-└── docs/                     diagrama de arquitectura (PNG y draw.io)
+└── docs/                     diagrama de arquitectura
 ```
 
 ## Limitaciones
