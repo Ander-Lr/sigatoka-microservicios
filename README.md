@@ -1,4 +1,4 @@
-# Detector de Sigatoka negra · Microservicios
+# Detector de Sigatoka negra - Microservicios
 
 [![CI](https://github.com/Ander-Lr/sigatoka-microservicios/actions/workflows/ci.yml/badge.svg)](https://github.com/Ander-Lr/sigatoka-microservicios/actions/workflows/ci.yml)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
